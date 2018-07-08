@@ -64,6 +64,9 @@ function nicapi_getConfigArray()
 
 function nicapi_Sync($params)
 {
+	// user defined configuration values
+    $token = $params['APIKey'];
+
     $api = new NicAPIClient($token);
 
     try {
