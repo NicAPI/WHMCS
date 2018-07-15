@@ -257,7 +257,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
         	'ns4' => $nameserver4,
         	'ns5' => $nameserver5,
         	'authinfo' => $authcode,
-        	'create_zone' > $params['CreateZone']
+        	'create_zone' => $params['CreateZone'] == 'on'
         ]);
         if ($result->status != 'success')
     		return [
