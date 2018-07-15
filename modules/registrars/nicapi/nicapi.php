@@ -198,9 +198,9 @@ function nicapi_RegisterDomain($params, $authcode = null)
     $enableIdProtection = (bool) $params['idprotection'];
     
     if (!$adminCountry)
-    	$adminCountry = $country;
-    if (!$country)
-    	$country = $adminCountry;
+    	$adminCountry = $countryCode;
+    if (!$countryCode)
+    	$countryCode = $adminCountry;
 
     $api = new NicAPIClient($token);
     
@@ -216,7 +216,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     		"postcode"       => $postcode,
     		"city"           => $city,
     		"region"         => $state,
-    		"country"        => $country,
+    		"country"        => $countryCode,
     		"email"          => $email,
     		"phone"			 => $phoneNumberFormatted,
     	]);
