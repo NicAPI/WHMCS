@@ -435,11 +435,13 @@ function nicapi_SaveDNS($params) {
     $records = [];
     foreach ($params['dnsrecords'] as $item) {
     	$hostname = trim($item['hostname'], 'N/A');
-    	$records[] = [
-    		'name' => $hostname ?: '@',
-    		'type' => $item['type'],
-    		'data' => ($item['priority'] != 'N/A' && is_numeric($item['priority']) ? ($item['priority'].' ') : '').$item['address']
-    	];
+    	if ($item['address']) {
+            $records[] = [
+                'name' => $hostname ?: '@',
+                'type' => $item['type'],
+                'data' => ($item['priority'] != 'N/A' && is_numeric($item['priority']) ? ($item['priority'] . ' ') : '') . $item['address']
+            ];
+        }
     }
         
     $result = $api->put('dns/zones/update', [
