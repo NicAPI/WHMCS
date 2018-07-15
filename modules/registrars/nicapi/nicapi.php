@@ -434,8 +434,9 @@ function nicapi_SaveDNS($params) {
     
     $records = [];
     foreach ($params['dnsrecords'] as $item) {
+    	$hostname = trim($item['hostname'], 'N/A');
     	$records[] = [
-    		'name' => $item['hostname'],
+    		'name' => $hostname ?: '@',
     		'type' => $item['type'],
     		'data' => $item['priority'].' '.$item['address']
     	];
