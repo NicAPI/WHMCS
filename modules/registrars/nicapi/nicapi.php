@@ -458,9 +458,81 @@ function nicapi_SaveDNS($params) {
     ];
 }
 
+function nicapi_GetContactDetails($params) {
+    // user defined configuration values
+    $token = $params['APIKey'];
 
+    $api = new NicAPIClient($token);
 
+    $result = 	$api->get('domain/domains/show', [
+        'domainName' => $params['sld'].'.'.$params['tld']
+    ]);
+    $domain = $result->data->domain;
 
+    $contacts = [];
+
+    foreach (['owner', 'admin'] as $type) {
+        $response = $api->get('domain/handles/show', [
+            'handle' => $domain->{$type.'C'}
+        ]);
+        $contact = $response->data->handle;
+
+        $contacts[$type] = [
+            'firstname' => $contact->firstname,
+            'lastname' => $contact->lastname,
+            'organisation' => $contact->organisation,
+            'street' => $contact->street,
+            'number' => $contact->number,
+            'postcode' => $contact->postcode,
+            'city' => $contact->city,
+            'region' => $contact->region,
+            'country' => $contact->country,
+            'phone' => $contact->phone,
+            'fax' => $contact->fax,
+            'email' => $contact->email
+        ];
+    }
+
+    return $contacts;
+}
+
+function nicapi_SaveContactDetails($params) {
+    // user defined configuration values
+    $token = $params['APIKey'];
+
+    $api = new NicAPIClient($token);
+
+    $result = 	$api->get('domain/domains/show', [
+        'domainName' => $params['sld'].'.'.$params['tld']
+    ]);
+    $domain = $result->data->domain;
+
+    foreach (['owner', 'admin'] as $type) {
+
+        $edit = $api->post('domain/handles/edit', [
+            'handle' => $domain->{$type.'C'},
+            'firstname' => $params['contactdetails'][$type]['firstname'],
+            'lastname' => $params['contactdetails'][$type]['lastname'],
+            'organisation' => $params['contactdetails'][$type]['organisation'],
+            'street' => $params['contactdetails'][$type]['street'],
+            'number' => $params['contactdetails'][$type]['number'],
+            'postcode' => $params['contactdetails'][$type]['postcode'],
+            'city' => $params['contactdetails'][$type]['city'],
+            'region' => $params['contactdetails'][$type]['region'],
+            'country' => $params['contactdetails'][$type]['country'],
+            'phone' => $params['contactdetails'][$type]['phone'],
+            'fax' => $params['contactdetails'][$type]['fax'],
+            'email' => $params['contactdetails'][$type]['email']
+        ]);
+        if ($edit->status != 'success')
+            return [
+                'error' => $result->messages->errors{0}->message
+            ];
+
+    }
+
+    return true;
+}
 
 
 
