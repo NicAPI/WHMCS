@@ -534,9 +534,91 @@ function nicapi_SaveContactDetails($params) {
     return true;
 }
 
+function nicapi_RequestDelete($params) {
+    // user defined configuration values
+    $token = $params['APIKey'];
 
+    $api = new NicAPIClient($token);
 
+    $result = 	$api->delete('domain/domains/delete', [
+        'domainName' => $params['sld'].'.'.$params['tld']
+    ]);
 
+    if ($result->status != 'success')
+        return [
+            'error' => $result->messages->errors{0}->message
+        ];
+
+    return true;
+}
+
+function nicapi_RequestDeleteExpire($params) {
+    // user defined configuration values
+    $token = $params['APIKey'];
+
+    $api = new NicAPIClient($token);
+
+    $result = 	$api->get('domain/domains/show', [
+        'domainName' => $params['sld'].'.'.$params['tld']
+    ]);
+    $domain = $result->data->domain;
+
+    $result = 	$api->delete('domain/domains/delete', [
+        'domainName' => $params['sld'].'.'.$params['tld'],
+        'date' => $domain->expire
+    ]);
+
+    if ($result->status != 'success')
+        return [
+            'error' => $result->messages->errors{0}->message
+        ];
+
+    return true;
+}
+
+function nicapi_CancelExpireDelete($params) {
+    // user defined configuration values
+    $token = $params['APIKey'];
+
+    $api = new NicAPIClient($token);
+
+    $result = 	$api->post('domain/domains/undelete', [
+        'domainName' => $params['sld'].'.'.$params['tld']
+    ]);
+
+    if ($result->status != 'success')
+        return [
+            'error' => $result->messages->errors{0}->message
+        ];
+
+    return true;
+}
+
+function nicapi_RequestRestore($params) {
+    // user defined configuration values
+    $token = $params['APIKey'];
+
+    $api = new NicAPIClient($token);
+
+    $result = 	$api->post('domain/domains/restore', [
+        'domainName' => $params['sld'].'.'.$params['tld']
+    ]);
+
+    if ($result->status != 'success')
+        return [
+            'error' => $result->messages->errors{0}->message
+        ];
+
+    return true;
+}
+
+function nicapi_AdminCustomButtonArray($params) {
+    return Array(
+        "Löschung zum Expire" => "RequestDeleteExpire",
+        "Löschung zurücknehmen" => "CancelExpireDelete",
+        "Wiederherstellung (Restore)" => "RequestRestore",
+    );
+}
 
 
 
