@@ -218,7 +218,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     		"region"         => $state,
     		"country"        => $countryCode,
     		"email"          => $email,
-    		"phone"			 => $phoneNumberFormatted,
+    		"phone"			 => $phoneNumber,
     	]);
     $ownerHandle = $handle->data->handle->handle;
     
@@ -237,7 +237,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     			"region"         => $adminState,
     			"country"        => $adminCountry,
     			"email"          => $adminEmail,
-    			"phone"			 => $adminPhoneNumberFormatted,
+    			"phone"			 => $adminPhoneNumber,
     		]);
     	$adminHandle = $handle->data->handle->handle;
     } else {
