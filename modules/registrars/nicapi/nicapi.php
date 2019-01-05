@@ -220,6 +220,11 @@ function nicapi_RegisterDomain($params, $authcode = null)
     		"email"          => $email,
     		"phone"			 => $phoneNumber,
     	]);
+    if ($result->status != 'success')
+        return [
+	    'error' => $handle->messages->errors{0}->message
+	];
+
     $ownerHandle = $handle->data->handle->handle;
     
     if (!$params['AdminC']) {
@@ -239,6 +244,11 @@ function nicapi_RegisterDomain($params, $authcode = null)
     			"email"          => $adminEmail,
     			"phone"			 => $adminPhoneNumber,
     		]);
+	if ($result->status != 'success')
+            return [
+	        'error' => $handle->messages->errors{0}->message
+	    ];
+	    
     	$adminHandle = $handle->data->handle->handle;
     } else {
     	$adminHandle = $params['AdminC'];
