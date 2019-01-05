@@ -204,7 +204,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
 
     $api = new NicAPIClient($token);
     
-    preg_match('/([A-Za-z0-9-.ß]* )+([0-9A-Za-z\/]+)/', $address1, $matches);
+    preg_match('/(([A-Za-z0-9-.ß]* )+)([0-9A-Za-z\/]+)/', $address1, $matches);
     $handle = $api->post('domain/handles/create', [
     	    "type"           => "PERS",
     		"sex"            => "MALE",
@@ -212,7 +212,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     		"lastname"       => $lastName,
     		"organisation"   => $companyName,
     		"street"         => $matches[1],
-    		"number"         => $matches[2],
+    		"number"         => $matches[3],
     		"postcode"       => $postcode,
     		"city"           => $city,
     		"region"         => $state,
@@ -228,7 +228,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     $ownerHandle = $handle->data->handle->handle;
     
     if (!$params['AdminC']) {
-    	preg_match('/([A-Za-z0-9-.ß]* )+([0-9A-Za-z\/]+)/', $adminAddress1, $matches);
+    	preg_match('/(([A-Za-z0-9-.ß]* )+)([0-9A-Za-z\/]+)/', $adminAddress1, $matches);
     	$handle = $api->post('domain/handles/create', [
     		    "type"           => "PERS",
     			"sex"            => "MALE",
@@ -236,7 +236,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     			"lastname"       => $adminLastName,
     			"organisation"   => $adminCompanyName,
     			"street"         => $matches[1],
-    			"number"         => $matches[2],
+    			"number"         => $matches[3],
     			"postcode"       => $adminPostcode,
     			"city"           => $adminCity,
     			"region"         => $adminState,
