@@ -222,7 +222,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     	]);
     if ($result->status != 'success')
         return [
-	    'error' => $handle->messages->errors{0}->message
+	    'error' => 'Fehler beim Erstellen des ownerC: '.$handle->messages->errors{0}->message
 	];
 
     $ownerHandle = $handle->data->handle->handle;
@@ -246,7 +246,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     		]);
 	if ($result->status != 'success')
             return [
-	        'error' => $handle->messages->errors{0}->message
+	        'error' => 'Fehler beim Erstellen des adminC: '.$handle->messages->errors{0}->message
 	    ];
 	    
     	$adminHandle = $handle->data->handle->handle;
