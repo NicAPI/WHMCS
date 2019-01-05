@@ -218,7 +218,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     		"region"         => $state,
     		"country"        => $countryCode,
     		"email"          => $email,
-    		"phone"			 => $phoneNumber,
+    		"phone"			 => $phoneNumber != "" ? $phoneNumber : '+49.0000000000',
     	]);
     if ($result->status != 'success')
         return [
@@ -242,7 +242,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     			"region"         => $adminState,
     			"country"        => $adminCountry,
     			"email"          => $adminEmail,
-    			"phone"			 => $adminPhoneNumber,
+    			"phone"			 => $adminPhoneNumber != "" ? $adminPhoneNumber : '+49.0000000000',
     		]);
 	if ($result->status != 'success')
             return [
