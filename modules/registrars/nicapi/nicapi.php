@@ -220,7 +220,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     		"email"          => $email,
     		"phone"			 => $phoneNumber != "" ? $phoneNumber : '+49.0000000000',
     	]);
-    if ($result->status != 'success')
+    if ($handle->status != 'success')
         return [
 	    'error' => 'Fehler beim Erstellen des ownerC: '.$handle->messages->errors{0}->message
 	];
