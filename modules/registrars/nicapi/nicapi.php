@@ -244,7 +244,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     			"email"          => $adminEmail,
     			"phone"			 => $adminPhoneNumber != "" ? $adminPhoneNumber : '+49.0000000000',
     		]);
-	if ($result->status != 'success')
+	if ($handle->status != 'success')
             return [
 	        'error' => 'Fehler beim Erstellen des adminC: '.$handle->messages->errors{0}->message
 	    ];
