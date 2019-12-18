@@ -559,14 +559,16 @@ function nicapi_RequestDeleteExpire($params) {
     $api = new NicAPIClient($token);
 
     $result = 	$api->get('domain/domains/show', [
-        'domainName' => $params['sld'].'.'.$params['tld']
+        'domainName' => $params['domain'] ?: $params['sld'].'.'.$params['tld']
     ]);
     $domain = $result->data->domain;
 
     $result = 	$api->delete('domain/domains/delete', [
-        'domainName' => $params['sld'].'.'.$params['tld'],
+        'domainName' => $params['domain'] ?: $params['sld'].'.'.$params['tld'],
         'date' => $domain->expire
     ]);
+
+    print_r($result);
 
     if ($result->status != 'success')
         return [
@@ -583,7 +585,7 @@ function nicapi_CancelExpireDelete($params) {
     $api = new NicAPIClient($token);
 
     $result = 	$api->post('domain/domains/undelete', [
-        'domainName' => $params['sld'].'.'.$params['tld']
+        'domainName' => $params['domain'] ?: $params['sld'].'.'.$params['tld']
     ]);
 
     if ($result->status != 'success')
