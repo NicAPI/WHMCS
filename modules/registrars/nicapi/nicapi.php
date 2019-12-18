@@ -204,7 +204,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
 
     $api = new NicAPIClient($token);
     
-    preg_match('/([A-Za-z0-9-]* )+([0-9A-Za-z\/]+)/', $address1, $matches);
+    preg_match('/(([A-Za-z0-9-.ß]* )+)([0-9A-Za-z\/]+)/', $address1, $matches);
     $handle = $api->post('domain/handles/create', [
     	    "type"           => "PERS",
     		"sex"            => "MALE",
@@ -212,18 +212,23 @@ function nicapi_RegisterDomain($params, $authcode = null)
     		"lastname"       => $lastName,
     		"organisation"   => $companyName,
     		"street"         => $matches[1],
-    		"number"         => $matches[2],
+    		"number"         => $matches[3],
     		"postcode"       => $postcode,
     		"city"           => $city,
     		"region"         => $state,
     		"country"        => $countryCode,
     		"email"          => $email,
-    		"phone"			 => $phoneNumberFormatted,
+    		"phone"			 => $phoneNumber != "" ? $phoneNumber : '+49.0000000000',
     	]);
+    if ($handle->status != 'success')
+        return [
+	    'error' => 'Fehler beim Erstellen des ownerC: '.$handle->messages->errors{0}->message
+	];
+
     $ownerHandle = $handle->data->handle->handle;
     
     if (!$params['AdminC']) {
-    	preg_match('/([A-Za-z0-9-]* )+([0-9A-Za-z\/]+)/', $adminAddress1, $matches);
+    	preg_match('/(([A-Za-z0-9-.ß]* )+)([0-9A-Za-z\/]+)/', $adminAddress1, $matches);
     	$handle = $api->post('domain/handles/create', [
     		    "type"           => "PERS",
     			"sex"            => "MALE",
@@ -231,14 +236,19 @@ function nicapi_RegisterDomain($params, $authcode = null)
     			"lastname"       => $adminLastName,
     			"organisation"   => $adminCompanyName,
     			"street"         => $matches[1],
-    			"number"         => $matches[2],
+    			"number"         => $matches[3],
     			"postcode"       => $adminPostcode,
     			"city"           => $adminCity,
     			"region"         => $adminState,
     			"country"        => $adminCountry,
     			"email"          => $adminEmail,
-    			"phone"			 => $adminPhoneNumberFormatted,
+    			"phone"			 => $adminPhoneNumber != "" ? $adminPhoneNumber : '+49.0000000000',
     		]);
+	if ($handle->status != 'success')
+            return [
+	        'error' => 'Fehler beim Erstellen des adminC: '.$handle->messages->errors{0}->message
+	    ];
+	    
     	$adminHandle = $handle->data->handle->handle;
     } else {
     	$adminHandle = $params['AdminC'];
