@@ -2,6 +2,8 @@
 
 use WHMCS\Domains\DomainLookup\ResultsList;
 use WHMCS\Domains\DomainLookup\SearchResult;
+use Illuminate\Database\Capsule\Manager as Capsule;
+
 
 include('apiclient.php');
 
@@ -79,14 +81,20 @@ function nicapi_Sync($params)
     		];
 
         $domain = $result->data->domain;
-        
+
+        $domain = (array)Capsule::table('tbldomains')->where('id', '=', $domainID)->first()[0];
+        if ($domain['registrar'] != 'nicapi') return;
+
+        $dbExpire = strtotime($domain['expirydate']);
+        $apiExpire = strtotime($domain->expire);
+
         return [
-        	'expirydate' => date("Y-m-d", strtotime($domain->expire)),
+        	'expirydate' => date("Y-m-d", $dbExpire > $apiExpire ? $dbExpire : $apiExpire),
         	'active' => strtotime($domain->expire) >= time(),
         	'expired' => strtotime($domain->expire) < time(),
         	'transferredAway' => false,
         ];
-        
+
     } catch (\Exception $e) {
         return array(
             'error' => $e->getMessage(),
@@ -101,16 +109,16 @@ function nicapi_CheckAvailability($params)
 
     $api = new NicAPIClient($token);
 
-    try {        
+    try {
         $results = new ResultsList();
-        
+
         foreach ($params['tlds'] as $tld) {
         	$tld = substr($tld, 1, strlen($tld));
-        	
+
         	$result = 	$api->post('domain/domains/check', [
         		'domainName' => $params['sld'].'.'.$tld
         	]);
-        	
+
         	$searchResult = new SearchResult($params['sld'], $tld);
         	// Determine the appropriate status to return
         	if ($result->data->available) {
@@ -119,11 +127,11 @@ function nicapi_CheckAvailability($params)
             	$status = SearchResult::STATUS_REGISTERED;
         	}
         	$searchResult->setStatus($status);
-        	
+
         	// Append to the search results list
         	$results->append($searchResult);
         }
-            
+
         return $results;
     } catch (\Exception $e) {
         return array(
@@ -153,7 +161,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     $nameserver3 = $params['ns3'];
     $nameserver4 = $params['ns4'];
     $nameserver5 = $params['ns5'];
-    
+
     // registrant information
     $firstName = $params["firstname"];
     $lastName = $params["lastname"];
@@ -171,7 +179,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     $phoneNumber = $params["phonenumber"]; // Phone number as the user provided it
     $phoneCountryCode = $params["phonecc"]; // Country code determined based on country
     $phoneNumberFormatted = $params["fullphonenumber"]; // Format: +CC.xxxxxxxxxxxx
-    
+
     /**
      * Admin contact information.
      *
@@ -196,14 +204,14 @@ function nicapi_RegisterDomain($params, $authcode = null)
     $enableDnsManagement = (bool) $params['dnsmanagement'];
     $enableEmailForwarding = (bool) $params['emailforwarding'];
     $enableIdProtection = (bool) $params['idprotection'];
-    
+
     if (!$adminCountry)
     	$adminCountry = $countryCode;
     if (!$countryCode)
     	$countryCode = $adminCountry;
 
     $api = new NicAPIClient($token);
-    
+
     preg_match('/(([A-Za-z0-9-.ß]* )+)([0-9A-Za-z\/]+)/', $address1, $matches);
     $handle = $api->post('domain/handles/create', [
     	    "type"           => "PERS",
@@ -226,7 +234,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
 	];
 
     $ownerHandle = $handle->data->handle->handle;
-    
+
     if (!$params['AdminC']) {
     	preg_match('/(([A-Za-z0-9-.ß]* )+)([0-9A-Za-z\/]+)/', $adminAddress1, $matches);
     	$handle = $api->post('domain/handles/create', [
@@ -248,12 +256,12 @@ function nicapi_RegisterDomain($params, $authcode = null)
             return [
 	        'error' => 'Fehler beim Erstellen des adminC: '.$handle->messages->errors{0}->message
 	    ];
-	    
+
     	$adminHandle = $handle->data->handle->handle;
     } else {
     	$adminHandle = $params['AdminC'];
     }
-	
+
     try {
         $result = $api->post('domain/domains/create', [
         	'domainName' => $sld.'.'.$tld,
@@ -273,7 +281,7 @@ function nicapi_RegisterDomain($params, $authcode = null)
     		return [
     			'error' => $result->messages->errors{0}->message
     		];
-        
+
         return array(
             'success' => $result->status == 'success',
         );
@@ -295,7 +303,7 @@ function nicapi_GetNameservers($params)
 
     $api = new NicAPIClient($token);
 
-    try {        
+    try {
         $result = $api->get('domain/domains/show', [
         	'domainName' => $params['sld'].'.'.$params['tld']
         ]);
@@ -305,7 +313,7 @@ function nicapi_GetNameservers($params)
     		];
 
         $domain = $result->data->domain;
-        
+
         return [
         	'success' => true,
         	'ns1' => $domain->nameservers->ns1->servername,
@@ -314,7 +322,7 @@ function nicapi_GetNameservers($params)
         	'ns4' => $domain->nameservers->ns4->servername,
         	'ns5' => $domain->nameservers->ns5->servername,
         ];
-        
+
     } catch (\Exception $e) {
         return array(
             'error' => $e->getMessage(),
@@ -322,18 +330,37 @@ function nicapi_GetNameservers($params)
     }
 }
 
+function nicapi_GetDomainInfo($params) {
+  // user defined configuration values
+  $token = $params['APIKey'];
+
+  $api = new NicAPIClient($token);
+
+  $result = $api->get('domain/domains/show', [
+    'domainName' => $params['domain'] ?? $params['sld'].'.'.$params['tld']
+  ]);
+  if ($result->status != 'success')
+  return [
+    'error' => $result->messages->errors{0}->message
+  ];
+
+  $domain = $result->data->domain;
+
+  return ['success' => true] + (array) $domain;
+}
+
 function nicapi_SaveNameservers($params) {
 	// user defined configuration values
     $token = $params['APIKey'];
 
     $api = new NicAPIClient($token);
-    
+
     $result = 	$api->get('domain/domains/show', [
         'domainName' => $params['sld'].'.'.$params['tld']
     ]);
     $domain = $result->data->domain;
 
-    try {        
+    try {
         $result = $api->post('domain/domains/edit', [
         	'domainName' => $params['sld'].'.'.$params['tld'],
         	'ownerC' => $domain->ownerC,
@@ -352,7 +379,7 @@ function nicapi_SaveNameservers($params) {
     		];
 
         $domain = $result->data->domain;
-        
+
         return [
         	'success' => true,
         	'ns1' => $domain->nameservers->ns1->servername,
@@ -361,7 +388,7 @@ function nicapi_SaveNameservers($params) {
         	'ns4' => $domain->nameservers->ns4->servername,
         	'ns5' => $domain->nameservers->ns5->servername,
         ];
-        
+
     } catch (\Exception $e) {
         return array(
             'error' => $e->getMessage(),
@@ -375,7 +402,7 @@ function nicapi_GetEPPCode($params) {
 
     $api = new NicAPIClient($token);
 
-    try {        
+    try {
         $result = $api->post('domain/domains/authcode', [
         	'domainName' => $params['sld'].'.'.$params['tld'],
         ]);
@@ -385,11 +412,11 @@ function nicapi_GetEPPCode($params) {
     		];
 
         $domain = $result->data->domain;
-        
+
         return [
         	'eppcode' => $domain->authinfo,
         ];
-        
+
     } catch (\Exception $e) {
         return array(
             'error' => $e->getMessage(),
@@ -407,7 +434,7 @@ function nicapi_GetDNS($params) {
         'domainName' => $params['sld'].'.'.$params['tld']
     ]);
     $domain = $result->data->domain;
-    
+
     $result = $api->get('dns/zones/show', [
     	'zone' => $domain->zone
     ]);
@@ -417,7 +444,7 @@ function nicapi_GetDNS($params) {
     	];
 
     $zone = $result->data->zone;
-    
+
     $hostRecords = [];
     foreach ($zone->records as $record) {
     	$hostRecords[] = [
@@ -427,7 +454,7 @@ function nicapi_GetDNS($params) {
     		'priority' => 'N/A'
     	];
     }
-    
+
     return $hostRecords;
 }
 
@@ -441,7 +468,7 @@ function nicapi_SaveDNS($params) {
         'domainName' => $params['sld'].'.'.$params['tld']
     ]);
     $domain = $result->data->domain;
-    
+
     $records = [];
     foreach ($params['dnsrecords'] as $item) {
     	$hostname = trim($item['hostname'], 'N/A');
@@ -453,7 +480,7 @@ function nicapi_SaveDNS($params) {
             ];
         }
     }
-        
+
     $result = $api->put('dns/zones/update', [
     	'zone' => $domain->zone,
     	'records' => $records
@@ -462,7 +489,7 @@ function nicapi_SaveDNS($params) {
     	return [
     		'error' => $result->messages->errors{0}->message
     	];
-        
+
     return [
     	'success' => true
     ];
@@ -606,6 +633,11 @@ function nicapi_CancelExpireDelete($params) {
     return true;
 }
 
+function nicapi_RenewDomain($params)
+{
+  return true;
+}
+
 function nicapi_RequestRestore($params) {
     // user defined configuration values
     $token = $params['APIKey'];
@@ -631,13 +663,3 @@ function nicapi_AdminCustomButtonArray($params) {
         "Wiederherstellung (Restore)" => "RequestRestore",
     );
 }
-
-
-
-
-
-
-
-
-
-
