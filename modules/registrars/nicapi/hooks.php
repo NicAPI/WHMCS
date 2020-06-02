@@ -19,14 +19,14 @@ function set_dns_entries($vars) {
 }
 
 
-function nicapi_DomainEdit($variables)
+/**function nicapi_DomainEdit($variables)
 {
     include_once '../../modules/registrars/nicapi/nicapi.php';
     $params = getregistrarconfigoptions("nicapi");
     if (empty($params))
         return;
     $domainID = $variables['domainid'];
-    $domain = (array)Capsule::table('tbldomains')->where('id', '=', $domainID)->first();
+    $domain = (array)Capsule::table('tbldomains')->where('id', '=', $domainID)->first()[0];
     if ($domain['registrar'] != 'nicapi') return;
     // user defined configuration values
     $token = $params['APIKey'];
@@ -37,4 +37,47 @@ function nicapi_DomainEdit($variables)
         nicapi_CancelExpireDelete($params+$domain);
     }
 }
-add_hook("DomainEdit", 1, "nicapi_DomainEdit");
+add_hook("DomainEdit", 1, "nicapi_DomainEdit");*/
+
+
+add_hook('AfterCronJob', 1, function($vars) {
+	$params = getregistrarconfigoptions("nicapi");
+	if (empty($params))
+			return;
+
+  $domains = Capsule::table('tbldomains')
+		->where('registrar', '=', 'nicapi')
+		->get();
+
+		foreach ($domains as $item) {
+			$domain = 	nicapi_GetDomainInfo([
+				'domain' => $item->domain,
+				'APIKey' => $params['APIKey']
+			]);
+
+			if (!$domain['expire'])
+				continue;
+
+			$dbExpire = strtotime($item->expirydate);
+			$apiExpire = strtotime($domain['expire']);
+
+			if ($dbExpire-$apiExpire > 86400*30) {
+				if ($domain['delete']) {
+					nicapi_CancelExpireDelete([
+						'domain' => $item->domain,
+						'APIKey' => $params['APIKey']
+					]);
+				}
+
+				continue; // further renew at nicapi necessary
+			}
+
+			if ($domain['delete'])
+				continue;
+
+			nicapi_RequestDeleteExpire([
+				'domain' => $item->domain,
+				'APIKey' => $params['APIKey']
+			]);
+		}
+});
