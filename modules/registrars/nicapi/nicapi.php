@@ -315,7 +315,6 @@ function nicapi_GetNameservers($params)
         $domain = $result->data->domain;
 
         return [
-        	'success' => true,
         	'ns1' => $domain->nameservers->ns1->servername,
         	'ns2' => $domain->nameservers->ns2->servername,
         	'ns3' => $domain->nameservers->ns3->servername,
