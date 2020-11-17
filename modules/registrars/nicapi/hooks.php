@@ -61,12 +61,16 @@ add_hook('AfterCronJob', 1, function($vars) {
 			$dbExpire = strtotime($item->expirydate);
 			$apiExpire = strtotime($domain['expire']);
 
-			if ($dbExpire-$apiExpire > 86400*30) {
+			if ($dbExpire-$apiExpire > 86400*15) {
 				if ($domain['delete']) {
-					nicapi_CancelExpireDelete([
+					$result = nicapi_CancelExpireDelete([
 						'domain' => $item->domain,
 						'APIKey' => $params['APIKey']
 					]);
+					if (isset($result['error'])) {
+						$receiver = $params['SystemNotificationMail'];
+						mail($receiver, 'Domain deletion withdraw failed', 'Deletion withdrawal of domain ' . $item->domain . ' failed with message: ' . $result['error']);
+					}
 				}
 
 				continue; // further renew at nicapi necessary
