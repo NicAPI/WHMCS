@@ -61,6 +61,12 @@ function nicapi_getConfigArray()
             'Type' => 'yesno',
             'Description' => 'Always create a dns zone (even if you are not using our nameservers).',
         ),
+        // notification mail
+        'SystemNotificationMail' => array(
+            'Type' => 'text',
+	    'Size' => '100',
+            'Description' => 'Mail address where system notifications are being sent to.',
+        ),
     );
 }
 
